@@ -242,6 +242,8 @@ module GFS_typedefs
     real (kind=kind_phys), pointer :: tisfc  (:)   => null()  !< surface temperature over ice fraction
     real (kind=kind_phys), pointer :: tiice(:,:)   => null()  !< internal ice temperature
     real (kind=kind_phys), pointer :: snowd  (:)   => null()  !< snow depth water equivalent in mm ; same as snwdph
+    real (kind=kind_phys), pointer :: snowd_land (:)   => null()  !< snow depth water equivalent in mm ; same as snwdph
+    real (kind=kind_phys), pointer :: snowd_ice  (:)   => null()  !< snow depth water equivalent in mm ; same as snwdph
     real (kind=kind_phys), pointer :: zorl   (:)   => null()  !< composite surface roughness in cm
     real (kind=kind_phys), pointer :: zorlo  (:)   => null()  !< ocean surface roughness in cm
     real (kind=kind_phys), pointer :: zorll  (:)   => null()  !< land surface roughness in cm
@@ -250,7 +252,8 @@ module GFS_typedefs
     real (kind=kind_phys), pointer :: hprime (:,:) => null()  !< orographic metrics
 
 !--- In (radiation only)
-    real (kind=kind_phys), pointer :: sncovr (:)   => null()  !< snow cover in fraction
+    real (kind=kind_phys), pointer :: sncovr_land (:)  => null()  !< snow cover in fraction
+    real (kind=kind_phys), pointer :: sncovr_ice (:)   => null()  !< snow cover in fraction
     real (kind=kind_phys), pointer :: snoalb (:)   => null()  !< maximum snow albedo in fraction
     real (kind=kind_phys), pointer :: alvsf  (:)   => null()  !< mean vis albedo with strong cosz dependency
     real (kind=kind_phys), pointer :: alnsf  (:)   => null()  !< mean nir albedo with strong cosz dependency
@@ -368,12 +371,22 @@ module GFS_typedefs
     !
     real (kind=kind_phys), pointer :: zs(:)            => null()  !< depth of soil levels for land surface model
     real (kind=kind_phys), pointer :: clw_surf(:)      => null()  !< RUC LSM: moist cloud water mixing ratio at surface
+    real (kind=kind_phys), pointer :: clw_surf_land(:) => null()  !< RUC LSM: moist cloud water mixing ratio at surface over land
+    real (kind=kind_phys), pointer :: clw_surf_ice(:)  => null()  !< RUC LSM: moist cloud water mixing ratio at surface over ice
     real (kind=kind_phys), pointer :: qwv_surf(:)      => null()  !< RUC LSM: water vapor mixing ratio at surface
+    real (kind=kind_phys), pointer :: qwv_surf_land(:) => null()  !< RUC LSM: water vapor mixing ratio at surface
+    real (kind=kind_phys), pointer :: qwv_surf_ice(:)  => null()  !< RUC LSM: water vapor mixing ratio at surface
     real (kind=kind_phys), pointer :: cndm_surf(:)     => null()  !< RUC LSM: surface condensation mass
+    real (kind=kind_phys), pointer :: cndm_surf_land(:)=> null()  !< RUC LSM: surface condensation mass over land
+    real (kind=kind_phys), pointer :: cndm_surf_ice(:) => null()  !< RUC LSM: surface condensation mass over ice
     real (kind=kind_phys), pointer :: rhofr(:)         => null()  !< RUC LSM: density of frozen precipitation
-    real (kind=kind_phys), pointer :: tsnow(:)         => null()  !< RUC LSM: snow temperature at the bottom of the first soil layer
-    real (kind=kind_phys), pointer :: snowfallac(:)    => null()  !< ruc lsm diagnostics
+    real (kind=kind_phys), pointer :: tsnow(:)         => null()  !< RUC LSM: snow temperature at the bottom of the first snow layer
+    real (kind=kind_phys), pointer :: tsnow_land(:)    => null()  !< RUC LSM: snow temperature at the bottom of the first snow layer over land
+    real (kind=kind_phys), pointer :: tsnow_ice(:)     => null()  !< RUC LSM: snow temperature at the bottom of the first snow layer over ice
     real (kind=kind_phys), pointer :: acsnow(:)        => null()  !< ruc lsm diagnostics
+    real (kind=kind_phys), pointer :: snowfallac(:)    => null()  !< ruc lsm diagnostics
+    real (kind=kind_phys), pointer :: snowfallac_land(:) => null()  !< ruc lsm diagnostics over land
+    real (kind=kind_phys), pointer :: snowfallac_ice(:)  => null()  !< ruc lsm diagnostics over ice
 
     !  MYNN surface layer
     real (kind=kind_phys), pointer :: ustm (:)         => null()  !u* including drag
@@ -774,12 +787,14 @@ module GFS_typedefs
     integer              :: lsm_noahmp=2    !< flag for NOAH land surface model
     integer              :: lsm_ruc=3       !< flag for RUC land surface model
     integer              :: lsoil           !< number of soil layers
-    integer              :: kice=2          !< number of layers in sice
 #ifdef CCPP
     integer              :: lsoil_lsm       !< number of soil layers internal to land surface model
     integer              :: lsnow_lsm       !< maximum number of snow layers internal to land surface model
     integer              :: lsnow_lsm_lbound!< lower bound for snow arrays, depending on lsnow_lsm
     logical              :: rdlai
+    integer              :: kice            !< number of layers in ice model
+#else
+    integer              :: kice=2          !< number of layers in sice
 #endif
     integer              :: ivegsrc         !< ivegsrc = 0   => USGS, 
                                             !< ivegsrc = 1   => IGBP (20 category)
@@ -1357,7 +1372,9 @@ module GFS_typedefs
 !--- Out (radiation only)
     real (kind=kind_phys), pointer :: htrsw (:,:)  => null()  !< swh  total sky sw heating rate in k/sec
     real (kind=kind_phys), pointer :: htrlw (:,:)  => null()  !< hlw  total sky lw heating rate in k/sec
-    real (kind=kind_phys), pointer :: sfalb (:)    => null()  !< mean surface diffused sw albedo 
+    real (kind=kind_phys), pointer :: sfalb (:)    => null()  !< mean surface diffused sw albedo
+    real (kind=kind_phys), pointer :: sfalb_land (:) => null()  !< mean surface diffused sw albedo
+    real (kind=kind_phys), pointer :: sfalb_ice  (:) => null()  !< mean surface diffused sw albedo
 
     real (kind=kind_phys), pointer :: coszen(:)    => null()  !< mean cos of zenith angle over rad call period
     real (kind=kind_phys), pointer :: tsflw (:)    => null()  !< surface air temp during lw calculation in k 
@@ -1700,11 +1717,18 @@ module GFS_typedefs
     real (kind=kind_phys), pointer      :: clouds(:,:,:)      => null()  !<
     real (kind=kind_phys), pointer      :: clw(:,:,:)         => null()  !<
     real (kind=kind_phys), pointer      :: clw_surf(:)        => null()  !<
+    real (kind=kind_phys), pointer      :: clw_surf_land(:) => null()  !<
+    real (kind=kind_phys), pointer      :: clw_surf_ice(:)  => null()  !<
+    real (kind=kind_phys), pointer      :: qwv_surf(:)        => null()  !<
+    real (kind=kind_phys), pointer      :: qwv_surf_land(:)   => null()  !<
+    real (kind=kind_phys), pointer      :: qwv_surf_ice(:)    => null()  !<
     real (kind=kind_phys), pointer      :: clx(:,:)           => null()  !<
     real (kind=kind_phys), pointer      :: cmm_ice(:)         => null()  !<
     real (kind=kind_phys), pointer      :: cmm_land(:)        => null()  !<
     real (kind=kind_phys), pointer      :: cmm_ocean(:)       => null()  !<
     real (kind=kind_phys), pointer      :: cndm_surf(:)       => null()  !<
+    real (kind=kind_phys), pointer      :: cndm_surf_land(:) => null()  !<
+    real (kind=kind_phys), pointer      :: cndm_surf_ice(:)  => null()  !<
     real (kind=kind_phys), pointer      :: cnv_dqldt(:,:)     => null()  !<
     real (kind=kind_phys), pointer      :: cnv_fice(:,:)      => null()  !<
     real (kind=kind_phys), pointer      :: cnv_mfd(:,:)       => null()  !<
@@ -1934,6 +1958,11 @@ module GFS_typedefs
     real (kind=kind_phys), pointer      :: tsfc_ocean(:)      => null()  !<
     real (kind=kind_phys), pointer      :: tsfg(:)            => null()  !<
     real (kind=kind_phys), pointer      :: tsnow(:)           => null()  !<
+    real (kind=kind_phys), pointer      :: tsnow_land(:)      => null()  !<
+    real (kind=kind_phys), pointer      :: tsnow_ice(:)       => null()  !<
+    real (kind=kind_phys), pointer      :: snowfallac(:)      => null()  !<
+    real (kind=kind_phys), pointer      :: snowfallac_land(:) => null()  !<
+    real (kind=kind_phys), pointer      :: snowfallac_ice(:)  => null()  !<
     real (kind=kind_phys), pointer      :: tsurf(:)           => null()  !<
     real (kind=kind_phys), pointer      :: tsurf_ice(:)       => null()  !<
     real (kind=kind_phys), pointer      :: tsurf_land(:)      => null()  !<
@@ -2224,6 +2253,8 @@ module GFS_typedefs
     allocate (Sfcprop%tisfc    (IM))
     allocate (Sfcprop%tiice    (IM,Model%kice))
     allocate (Sfcprop%snowd    (IM))
+    allocate (Sfcprop%snowd_land  (IM))
+    allocate (Sfcprop%snowd_ice   (IM))
     allocate (Sfcprop%zorl     (IM))
     allocate (Sfcprop%zorlo    (IM))
     allocate (Sfcprop%zorll    (IM))
@@ -2242,6 +2273,8 @@ module GFS_typedefs
     Sfcprop%tisfc     = clear_val
     Sfcprop%tiice     = clear_val
     Sfcprop%snowd     = clear_val
+    Sfcprop%snowd_land   = clear_val
+    Sfcprop%snowd_ice    = clear_val
     Sfcprop%zorl      = clear_val
     Sfcprop%zorlo     = clear_val
     Sfcprop%zorll     = clear_val
@@ -2250,7 +2283,8 @@ module GFS_typedefs
     Sfcprop%hprime    = clear_val
 
 !--- In (radiation only)
-    allocate (Sfcprop%sncovr (IM))
+    allocate (Sfcprop%sncovr_land (IM))
+    allocate (Sfcprop%sncovr_ice (IM))
     allocate (Sfcprop%snoalb (IM))
     allocate (Sfcprop%alvsf  (IM))
     allocate (Sfcprop%alnsf  (IM))
@@ -2259,7 +2293,8 @@ module GFS_typedefs
     allocate (Sfcprop%facsf  (IM))
     allocate (Sfcprop%facwf  (IM))
 
-    Sfcprop%sncovr = clear_val
+    Sfcprop%sncovr_land = clear_val
+    Sfcprop%sncovr_ice  = clear_val
     Sfcprop%snoalb = clear_val
     Sfcprop%alvsf  = clear_val
     Sfcprop%alnsf  = clear_val
@@ -2303,7 +2338,8 @@ module GFS_typedefs
 !--- In/Out
     allocate (Sfcprop%hice   (IM))
     allocate (Sfcprop%weasd  (IM))
-    allocate (Sfcprop%sncovr (IM))
+    allocate (Sfcprop%sncovr_land (IM))
+    allocate (Sfcprop%sncovr_ice  (IM))
     allocate (Sfcprop%canopy (IM))
     allocate (Sfcprop%ffmm   (IM))
     allocate (Sfcprop%ffhh   (IM))
@@ -2316,7 +2352,8 @@ module GFS_typedefs
 
     Sfcprop%hice   = clear_val
     Sfcprop%weasd  = clear_val
-    Sfcprop%sncovr = clear_val
+    Sfcprop%sncovr_land = clear_val
+    Sfcprop%sncovr_ice  = clear_val
     Sfcprop%canopy = clear_val
     Sfcprop%ffmm   = clear_val
     Sfcprop%ffhh   = clear_val
@@ -2498,13 +2535,24 @@ module GFS_typedefs
        allocate (Sfcprop%tslb        (IM,Model%lsoil_lsm))
        allocate (Sfcprop%flag_frsoil (IM,Model%lsoil_lsm))
        allocate (Sfcprop%zs          (Model%lsoil_lsm))
-       allocate (Sfcprop%clw_surf    (IM))
-       allocate (Sfcprop%qwv_surf    (IM))
-       allocate (Sfcprop%cndm_surf   (IM))
-       allocate (Sfcprop%rhofr       (IM))
-       allocate (Sfcprop%tsnow       (IM))
-       allocate (Sfcprop%snowfallac  (IM))
-       allocate (Sfcprop%acsnow      (IM))
+       allocate (Sfcprop%clw_surf      (IM))
+       allocate (Sfcprop%clw_surf_land (IM))
+       allocate (Sfcprop%clw_surf_ice  (IM))
+       allocate (Sfcprop%qwv_surf      (IM))
+       allocate (Sfcprop%qwv_surf_land (IM))
+       allocate (Sfcprop%qwv_surf_ice  (IM))
+       allocate (Sfcprop%cndm_surf     (IM))
+       allocate (Sfcprop%cndm_surf_land(IM))
+       allocate (Sfcprop%cndm_surf_ice (IM))
+       allocate (Sfcprop%rhofr         (IM))
+       allocate (Sfcprop%tsnow         (IM))
+       allocate (Sfcprop%tsnow_land    (IM))
+       allocate (Sfcprop%tsnow_ice     (IM))
+       allocate (Sfcprop%snowfallac    (IM))
+       allocate (Sfcprop%snowfallac_land (IM))
+       allocate (Sfcprop%snowfallac_ice  (IM))
+       allocate (Sfcprop%acsnow        (IM))
+
        !
        Sfcprop%wetness     = clear_val
        Sfcprop%sh2o        = clear_val
@@ -2512,13 +2560,23 @@ module GFS_typedefs
        Sfcprop%smois       = clear_val
        Sfcprop%tslb        = clear_val
        Sfcprop%zs          = clear_val
-       Sfcprop%clw_surf    = clear_val
-       Sfcprop%qwv_surf    = clear_val
-       Sfcprop%cndm_surf   = clear_val
+       Sfcprop%clw_surf      = clear_val
+       Sfcprop%clw_surf_land = clear_val
+       Sfcprop%clw_surf_ice  = clear_val
+       Sfcprop%qwv_surf      = clear_val
+       Sfcprop%qwv_surf_land = clear_val
+       Sfcprop%qwv_surf_ice  = clear_val
+       Sfcprop%cndm_surf      = clear_val
+       Sfcprop%cndm_surf_land = clear_val
+       Sfcprop%cndm_surf_ice  = clear_val
        Sfcprop%flag_frsoil = clear_val
        Sfcprop%rhofr       = clear_val
        Sfcprop%tsnow       = clear_val
+       Sfcprop%tsnow_land  = clear_val
+       Sfcprop%tsnow_ice   = clear_val
        Sfcprop%snowfallac  = clear_val
+       Sfcprop%snowfallac_land = clear_val
+       Sfcprop%snowfallac_ice  = clear_val
        Sfcprop%acsnow      = clear_val
        !
        if (Model%rdlai) then
@@ -3044,6 +3102,7 @@ module GFS_typedefs
     integer              :: lsoil_lsm      =  -1             !< number of soil layers internal to land surface model; -1 use lsoil
     integer              :: lsnow_lsm      =  3              !< maximum number of snow layers internal to land surface model
     logical              :: rdlai          = .false.
+    integer              :: kice           =  -1             !< number of layers in ice; -1 use 2
 #endif
     integer              :: ivegsrc        =  2              !< ivegsrc = 0   => USGS,
                                                              !< ivegsrc = 1   => IGBP (20 category)
@@ -3358,7 +3417,7 @@ module GFS_typedefs
                                avg_max_length,                                              &
                           !--- land/surface model control
 #ifdef CCPP
-                               lsm, lsoil, lsoil_lsm, lsnow_lsm, rdlai,                     &
+                               lsm, lsoil, lsoil_lsm, lsnow_lsm, kice, rdlai,               &
                                nmtvr, ivegsrc, use_ufo,                                     &
 #else
                                lsm, lsoil, nmtvr, ivegsrc, use_ufo,                         &
@@ -3804,6 +3863,14 @@ module GFS_typedefs
     else
       Model%lsoil_lsm      = lsoil_lsm
     end if
+
+    ! Set number of ice model layers
+    if (kice==-1) then
+      Model%kice      = 2
+    else
+      Model%kice      = kice
+    end if
+
     if (lsnow_lsm /= 3) then
       write(0,*) 'Logic error: NoahMP expects the maximum number of snow layers to be exactly 3 (see sfc_noahmp_drv.f)'
       stop
@@ -5464,6 +5531,8 @@ module GFS_typedefs
     allocate (Radtend%htrsw  (IM,Model%levs))
     allocate (Radtend%htrlw  (IM,Model%levs))
     allocate (Radtend%sfalb  (IM))
+    allocate (Radtend%sfalb_land (IM))
+    allocate (Radtend%sfalb_ice  (IM))
     allocate (Radtend%coszen (IM))
     allocate (Radtend%tsflw  (IM))
     allocate (Radtend%semis  (IM))
@@ -5471,6 +5540,8 @@ module GFS_typedefs
     Radtend%htrsw  = clear_val
     Radtend%htrlw  = clear_val
     Radtend%sfalb  = clear_val
+    Radtend%sfalb_land = clear_val
+    Radtend%sfalb_ice  = clear_val
     Radtend%coszen = clear_val
     Radtend%tsflw  = clear_val
     Radtend%semis  = clear_val

@@ -561,9 +561,16 @@
   dimensions = (horizontal_dimension)
   type = real
   kind = kind_phys
-[sncovr]
+[sncovr_land]
   standard_name = surface_snow_area_fraction_over_land
-  long_name = surface snow area fraction
+  long_name = surface snow area fraction over land
+  units = frac
+  dimensions = (horizontal_dimension)
+  type = real
+  kind = kind_phys
+[sncovr_ice]
+  standard_name = surface_snow_area_fraction_over_ice
+  long_name = surface snow area fraction over ice
   units = frac
   dimensions = (horizontal_dimension)
   type = real
@@ -1177,6 +1184,20 @@
   dimensions = (horizontal_dimension)
   type = real
   kind = kind_phys
+[clw_surf_land]
+  standard_name = cloud_condensed_water_mixing_ratio_at_surface_over_land
+  long_name = moist cloud water mixing ratio at surface over land
+  units = kg kg-1
+  dimensions = (horizontal_dimension)
+  type = real
+  kind = kind_phys
+[clw_surf_ice]
+  standard_name = cloud_condensed_water_mixing_ratio_at_surface_over_ice
+  long_name = moist cloud water mixing ratio at surface over ice
+  units = kg kg-1
+  dimensions = (horizontal_dimension)
+  type = real
+  kind = kind_phys
 [qwv_surf]
   standard_name = water_vapor_mixing_ratio_at_surface
   long_name = water vapor mixing ratio at surface
@@ -1184,9 +1205,37 @@
   dimensions = (horizontal_dimension)
   type = real
   kind = kind_phys
+[qwv_surf_land]
+  standard_name = water_vapor_mixing_ratio_at_surface_over_land
+  long_name = water vapor mixing ratio at surface over land
+  units = kg kg-1
+  dimensions = (horizontal_dimension)
+  type = real
+  kind = kind_phys
+[qwv_surf_ice]
+  standard_name = water_vapor_mixing_ratio_at_surface_over_ice
+  long_name = water vapor mixing ratio at surface over ice
+  units = kg kg-1
+  dimensions = (horizontal_dimension)
+  type = real
+  kind = kind_phys
 [cndm_surf]
   standard_name = surface_condensation_mass
   long_name = surface condensation mass
+  units = kg m-2
+  dimensions = (horizontal_dimension)
+  type = real
+  kind = kind_phys
+[cndm_surf_land]
+  standard_name = surface_condensation_mass_over_land
+  long_name = surface condensation mass
+  units = kg m-2
+  dimensions = (horizontal_dimension)
+  type = real
+  kind = kind_phys
+[cndm_surf_ice]
+  standard_name = surface_condensation_mass_over_ice
+  long_name = surface condensation mass over ice
   units = kg m-2
   dimensions = (horizontal_dimension)
   type = real
@@ -1212,9 +1261,37 @@
   dimensions = (horizontal_dimension)
   type = real
   kind = kind_phys
+[tsnow_land]
+  standard_name = snow_temperature_bottom_first_layer_over_land
+  long_name = snow temperature at the bottom of the first snow layer over land
+  units = K
+  dimensions = (horizontal_dimension)
+  type = real
+  kind = kind_phys
+[tsnow_ice]
+  standard_name = snow_temperature_bottom_first_layer_over_ice
+  long_name = snow temperature at the bottom of the first snow layer over ice
+  units = K
+  dimensions = (horizontal_dimension)
+  type = real
+  kind = kind_phys
 [snowfallac]
   standard_name = total_accumulated_snowfall
   long_name = run-total snow accumulation on the ground
+  units = kg m-2
+  dimensions = (horizontal_dimension)
+  type = real
+  kind = kind_phys
+[snowfallac_land]
+  standard_name = total_accumulated_snowfall_over_land
+  long_name = run-total snow accumulation on the ground
+  units = kg m-2
+  dimensions = (horizontal_dimension)
+  type = real
+  kind = kind_phys
+[snowfallac_ice]
+  standard_name = total_accumulated_snowfall_over_ice
+  long_name = run-total snow accumulation on the ice
   units = kg m-2
   dimensions = (horizontal_dimension)
   type = real
@@ -4889,6 +4966,20 @@
 [sfalb]
   standard_name = surface_diffused_shortwave_albedo
   long_name = mean surface diffused sw albedo
+  units = frac
+  dimensions = (horizontal_dimension)
+  type = real
+  kind = kind_phys
+[sfalb_land]
+  standard_name = surface_diffused_shortwave_albedo_over_land
+  long_name = mean surface diffused sw albed over land with snow effect
+  units = frac
+  dimensions = (horizontal_dimension)
+  type = real
+  kind = kind_phys
+[sfalb_ice]
+  standard_name = surface_diffused_shortwave_albedo_over_ice
+  long_name = mean surface diffused sw albedo over ice with snow effect
   units = frac
   dimensions = (horizontal_dimension)
   type = real
