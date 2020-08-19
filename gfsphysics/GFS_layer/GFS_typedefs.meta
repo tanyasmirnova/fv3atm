@@ -561,9 +561,9 @@
   dimensions = (horizontal_dimension)
   type = real
   kind = kind_phys
-[sncovr_land]
+[sncovr]
   standard_name = surface_snow_area_fraction_over_land
-  long_name = surface snow area fraction over land
+  long_name = surface snow area fraction
   units = frac
   dimensions = (horizontal_dimension)
   type = real

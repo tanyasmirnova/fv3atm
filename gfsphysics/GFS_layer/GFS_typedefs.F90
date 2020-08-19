@@ -252,7 +252,7 @@ module GFS_typedefs
     real (kind=kind_phys), pointer :: hprime (:,:) => null()  !< orographic metrics
 
 !--- In (radiation only)
-    real (kind=kind_phys), pointer :: sncovr_land (:)  => null()  !< snow cover in fraction
+    real (kind=kind_phys), pointer :: sncovr (:)   => null()  !< snow cover in fraction
     real (kind=kind_phys), pointer :: sncovr_ice (:)   => null()  !< snow cover in fraction
     real (kind=kind_phys), pointer :: snoalb (:)   => null()  !< maximum snow albedo in fraction
     real (kind=kind_phys), pointer :: alvsf  (:)   => null()  !< mean vis albedo with strong cosz dependency
@@ -2283,7 +2283,7 @@ module GFS_typedefs
     Sfcprop%hprime    = clear_val
 
 !--- In (radiation only)
-    allocate (Sfcprop%sncovr_land (IM))
+    allocate (Sfcprop%sncovr (IM))
     allocate (Sfcprop%sncovr_ice (IM))
     allocate (Sfcprop%snoalb (IM))
     allocate (Sfcprop%alvsf  (IM))
@@ -2293,7 +2293,7 @@ module GFS_typedefs
     allocate (Sfcprop%facsf  (IM))
     allocate (Sfcprop%facwf  (IM))
 
-    Sfcprop%sncovr_land = clear_val
+    Sfcprop%sncovr = clear_val
     Sfcprop%sncovr_ice  = clear_val
     Sfcprop%snoalb = clear_val
     Sfcprop%alvsf  = clear_val
@@ -2338,7 +2338,7 @@ module GFS_typedefs
 !--- In/Out
     allocate (Sfcprop%hice   (IM))
     allocate (Sfcprop%weasd  (IM))
-    allocate (Sfcprop%sncovr_land (IM))
+    allocate (Sfcprop%sncovr (IM))
     allocate (Sfcprop%sncovr_ice  (IM))
     allocate (Sfcprop%canopy (IM))
     allocate (Sfcprop%ffmm   (IM))
@@ -2352,7 +2352,7 @@ module GFS_typedefs
 
     Sfcprop%hice   = clear_val
     Sfcprop%weasd  = clear_val
-    Sfcprop%sncovr_land = clear_val
+    Sfcprop%sncovr = clear_val
     Sfcprop%sncovr_ice  = clear_val
     Sfcprop%canopy = clear_val
     Sfcprop%ffmm   = clear_val
