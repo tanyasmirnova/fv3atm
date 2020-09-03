@@ -4994,6 +4994,7 @@ module GFS_typedefs
       print *, ' rdlai             : ', Model%rdlai
       print *, ' lsoil_lsm         : ', Model%lsoil_lsm
       print *, ' lsnow_lsm         : ', Model%lsnow_lsm
+      print *, ' kice              : ', Model%kice
 #endif
       print *, ' ivegsrc           : ', Model%ivegsrc
       print *, ' isot              : ', Model%isot
