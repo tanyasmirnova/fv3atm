@@ -280,6 +280,13 @@ module stochastic_physics_wrapper_mod
              deallocate(slc) 
              deallocate(stc) 
              deallocate(vfrac) 
+             deallocate(alvsf)
+             deallocate(alnsf)
+             deallocate(alvwf)
+             deallocate(alnwf)
+             deallocate(facsf)
+             deallocate(facwf)
+
          endif ! lndp block
          deallocate(xlat)
          deallocate(xlon)
