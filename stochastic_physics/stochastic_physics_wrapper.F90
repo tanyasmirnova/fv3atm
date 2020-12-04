@@ -16,7 +16,9 @@ module stochastic_physics_wrapper_mod
   real(kind=kind_phys), dimension(:,:,:), allocatable, save :: smc
   real(kind=kind_phys), dimension(:,:,:), allocatable, save :: stc
   real(kind=kind_phys), dimension(:,:,:), allocatable, save :: slc
+  !
   real(kind=kind_phys), dimension(:,:), allocatable, save :: vfrac
+  real(kind=kind_phys), dimension(:),   allocatable, save :: zs_lsm, dzs_lsm
   !albedo
   real(kind=kind_phys), dimension(:,:), allocatable, save :: snoalb
   real(kind=kind_phys), dimension(:,:), allocatable, save :: alvsf
@@ -70,6 +72,7 @@ module stochastic_physics_wrapper_mod
     use cellular_automata_sgs_mod,    only: cellular_automata_sgs
     use lndp_apply_perts_mod, only: lndp_apply_perts
     use namelist_soilveg_ruc, only: MAXSMC, MAXSMCnoah
+    use module_soil_pre
 
     implicit none
 
@@ -80,8 +83,8 @@ module stochastic_physics_wrapper_mod
 
     integer :: nthreads, nb
     logical :: param_update_flag
-    real(kind=kind_phys), dimension(30) :: smcmax
-    integer :: nsoil
+    real(kind=kind_phys), dimension(30) :: smcmax, smcmax_lsm
+    integer :: nsoil, nsoil_lsm
 
 #ifdef _OPENMP
     nthreads = omp_get_max_threads()
@@ -199,6 +202,9 @@ module stochastic_physics_wrapper_mod
                allocate(stc(1:Atm_block%nblks,maxval(GFS_Control%blksz),GFS_Control%lsoil_lsm))
              endif
 
+             allocate(zs_lsm(1:GFS_Control%lsoil_lsm))
+             allocate(dzs_lsm(1:GFS_Control%lsoil_lsm))
+
              allocate(stype(1:Atm_block%nblks,maxval(GFS_Control%blksz)))
              allocate(vfrac(1:Atm_block%nblks,maxval(GFS_Control%blksz)))
              allocate(snoalb(1:Atm_block%nblks,maxval(GFS_Control%blksz)))
@@ -209,6 +215,9 @@ module stochastic_physics_wrapper_mod
              allocate(facsf(1:Atm_block%nblks,maxval(GFS_Control%blksz)))
              allocate(facwf(1:Atm_block%nblks,maxval(GFS_Control%blksz)))
              allocate(semis(1:Atm_block%nblks,maxval(GFS_Control%blksz)))
+
+             zs_lsm = 0.
+             dzs_lsm = 0.
 
              do nb=1,Atm_block%nblks
                 stype(nb,1:GFS_Control%blksz(nb))  = GFS_Data(nb)%Sfcprop%stype(:)
@@ -238,19 +247,22 @@ module stochastic_physics_wrapper_mod
              else
                     param_update_flag = .false.
              endif 
-             if (GFS_Control%lsm == 1) then
-             ! Noah LSM
-               smcmax = MAXSMCnoah
-               nsoil  = GFS_Control%lsoil
-             elseif (GFS_Control%lsm == GFS_Control%lsm_ruc) then
-             ! RUC LSM
-               smcmax = MAXSMC
-               nsoil  = GFS_Control%lsoil_lsm
+
+               smcmax     = MAXSMCnoah ! Noah lsm
+               nsoil      = GFS_Control%lsoil
+               smcmax_lsm = MAXSMC ! RUC lsm
+               nsoil_lsm  = GFS_Control%lsoil_lsm
+
+             if (GFS_Control%lsm == GFS_Control%lsm_ruc) then
+             ! -- RUC lsm
+                 call init_soil_depth_3 ( zs_lsm , dzs_lsm , GFS_Control%lsoil_lsm )
              endif
 
-             call lndp_apply_perts( GFS_Control%blksz, GFS_Control%lsm,  nsoil, GFS_Control%dtf,              & 
+             call lndp_apply_perts( GFS_Control%blksz, GFS_Control%lsm,  nsoil, GFS_Control%lsm_ruc,          &
+                               nsoil_lsm, dzs_lsm, GFS_Control%dtf,                                           & 
                                GFS_Control%n_var_lndp, GFS_Control%lndp_var_list, GFS_Control%lndp_prt_list,  & 
-                               sfc_wts, xlon, xlat, stype, smcmax,param_update_flag, smc, slc,stc,            &
+                               sfc_wts, xlon, xlat, stype, smcmax, smcmax_lsm,                                &
+                               param_update_flag, smc, slc, stc,                                              &
                                vfrac, alvsf, alnsf, alvwf, alnwf, facsf, facwf, snoalb, semis, ierr) 
              if (ierr/=0)  then 
                     write(6,*) 'call to GFS_apply_lndp failed'
