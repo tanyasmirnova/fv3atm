@@ -248,10 +248,10 @@ module stochastic_physics_wrapper_mod
                     param_update_flag = .false.
              endif 
 
-               smcmax     = MAXSMCnoah ! Noah lsm
-               nsoil      = GFS_Control%lsoil
-               smcmax_lsm = MAXSMC ! RUC lsm
-               nsoil_lsm  = GFS_Control%lsoil_lsm
+             smcmax     = MAXSMCnoah ! Noah lsm
+             nsoil      = GFS_Control%lsoil
+             smcmax_lsm = MAXSMC ! RUC lsm
+             nsoil_lsm  = GFS_Control%lsoil_lsm
 
              if (GFS_Control%lsm == GFS_Control%lsm_ruc) then
              ! -- RUC lsm
