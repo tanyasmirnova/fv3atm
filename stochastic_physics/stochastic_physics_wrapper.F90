@@ -18,7 +18,6 @@ module stochastic_physics_wrapper_mod
   real(kind=kind_phys), dimension(:,:,:), allocatable, save :: slc
   !
   real(kind=kind_phys), dimension(:,:), allocatable, save :: vfrac
-  real(kind=kind_phys), dimension(:),   allocatable, save :: zs_lsm, dzs_lsm
   !albedo
   real(kind=kind_phys), dimension(:,:), allocatable, save :: snoalb
   real(kind=kind_phys), dimension(:,:), allocatable, save :: alvsf
@@ -28,7 +27,7 @@ module stochastic_physics_wrapper_mod
   real(kind=kind_phys), dimension(:,:), allocatable, save :: facsf
   real(kind=kind_phys), dimension(:,:), allocatable, save :: facwf
   !emissivity
-  real(kind=kind_phys), dimension(:,:), allocatable, save :: semis
+  !real(kind=kind_phys), dimension(:,:), allocatable, save :: semis
 
   real(kind=kind_phys), dimension(:,:), allocatable, save :: stype
 
@@ -83,8 +82,10 @@ module stochastic_physics_wrapper_mod
 
     integer :: nthreads, nb
     logical :: param_update_flag
-    real(kind=kind_phys), dimension(30) :: smcmax, smcmax_lsm
     integer :: nsoil, nsoil_lsm
+
+    real(kind=kind_phys), dimension(:),   allocatable :: zs_lsm
+    real(kind=kind_phys), dimension(:),   allocatable :: dzs_lsm
 
 #ifdef _OPENMP
     nthreads = omp_get_max_threads()
@@ -196,14 +197,16 @@ module stochastic_physics_wrapper_mod
                allocate(smc(1:Atm_block%nblks,maxval(GFS_Control%blksz),GFS_Control%lsoil))
                allocate(slc(1:Atm_block%nblks,maxval(GFS_Control%blksz),GFS_Control%lsoil))
                allocate(stc(1:Atm_block%nblks,maxval(GFS_Control%blksz),GFS_Control%lsoil))
+               allocate(zs_lsm(1:GFS_Control%lsoil))
+               allocate(dzs_lsm(1:GFS_Control%lsoil))
              elseif (GFS_Control%lsm == GFS_Control%lsm_ruc) then
                allocate(smc(1:Atm_block%nblks,maxval(GFS_Control%blksz),GFS_Control%lsoil_lsm))
                allocate(slc(1:Atm_block%nblks,maxval(GFS_Control%blksz),GFS_Control%lsoil_lsm))
                allocate(stc(1:Atm_block%nblks,maxval(GFS_Control%blksz),GFS_Control%lsoil_lsm))
+               allocate(zs_lsm(1:GFS_Control%lsoil_lsm))
+               allocate(dzs_lsm(1:GFS_Control%lsoil_lsm))
              endif
 
-             allocate(zs_lsm(1:GFS_Control%lsoil_lsm))
-             allocate(dzs_lsm(1:GFS_Control%lsoil_lsm))
 
              allocate(stype(1:Atm_block%nblks,maxval(GFS_Control%blksz)))
              allocate(vfrac(1:Atm_block%nblks,maxval(GFS_Control%blksz)))
@@ -214,10 +217,7 @@ module stochastic_physics_wrapper_mod
              allocate(alnwf(1:Atm_block%nblks,maxval(GFS_Control%blksz)))
              allocate(facsf(1:Atm_block%nblks,maxval(GFS_Control%blksz)))
              allocate(facwf(1:Atm_block%nblks,maxval(GFS_Control%blksz)))
-             allocate(semis(1:Atm_block%nblks,maxval(GFS_Control%blksz)))
-
-             zs_lsm = 0.
-             dzs_lsm = 0.
+             !allocate(semis(1:Atm_block%nblks,maxval(GFS_Control%blksz)))
 
              do nb=1,Atm_block%nblks
                 stype(nb,1:GFS_Control%blksz(nb))  = GFS_Data(nb)%Sfcprop%stype(:)
@@ -229,7 +229,7 @@ module stochastic_physics_wrapper_mod
                 alnwf(nb,1:GFS_Control%blksz(nb))  = GFS_Data(nb)%Sfcprop%alnwf(:)
                 facsf(nb,1:GFS_Control%blksz(nb))  = GFS_Data(nb)%Sfcprop%facsf(:)
                 facwf(nb,1:GFS_Control%blksz(nb))  = GFS_Data(nb)%Sfcprop%facwf(:)
-                semis(nb,1:GFS_Control%blksz(nb))  = GFS_Data(nb)%Radtend%semis(:)
+                !semis(nb,1:GFS_Control%blksz(nb))  = GFS_Data(nb)%Radtend%semis(:)
                if (GFS_Control%lsm == 1) then
                  smc(nb,1:GFS_Control%blksz(nb),:)  = GFS_Data(nb)%Sfcprop%smc(:,:) 
                  slc(nb,1:GFS_Control%blksz(nb),:)  = GFS_Data(nb)%Sfcprop%slc(:,:) 
@@ -248,11 +248,11 @@ module stochastic_physics_wrapper_mod
                     param_update_flag = .false.
              endif 
 
-             smcmax     = MAXSMCnoah ! Noah lsm
              nsoil      = GFS_Control%lsoil
-             smcmax_lsm = MAXSMC ! RUC lsm
              nsoil_lsm  = GFS_Control%lsoil_lsm
 
+             zs_lsm = 0.
+             dzs_lsm = 0.
              if (GFS_Control%lsm == GFS_Control%lsm_ruc) then
              ! -- RUC lsm
                  call init_soil_depth_3 ( zs_lsm , dzs_lsm , GFS_Control%lsoil_lsm )
@@ -261,9 +261,10 @@ module stochastic_physics_wrapper_mod
              call lndp_apply_perts( GFS_Control%blksz, GFS_Control%lsm,  nsoil, GFS_Control%lsm_ruc,          &
                                nsoil_lsm, dzs_lsm, GFS_Control%dtf,                                           & 
                                GFS_Control%n_var_lndp, GFS_Control%lndp_var_list, GFS_Control%lndp_prt_list,  & 
-                               sfc_wts, xlon, xlat, stype, smcmax, smcmax_lsm,                                &
+                               sfc_wts, xlon, xlat, stype, MAXSMCnoah, MAXSMC,                                &
                                param_update_flag, smc, slc, stc,                                              &
-                               vfrac, alvsf, alnsf, alvwf, alnwf, facsf, facwf, snoalb, semis, ierr) 
+                               vfrac, alvsf, alnsf, alvwf, alnwf, facsf, facwf, snoalb, ierr) 
+                               !vfrac, alvsf, alnsf, alvwf, alnwf, facsf, facwf, snoalb, semis, ierr) 
              if (ierr/=0)  then 
                     write(6,*) 'call to GFS_apply_lndp failed'
                     return
@@ -279,7 +280,7 @@ module stochastic_physics_wrapper_mod
              GFS_Data(nb)%Sfcprop%alnwf(:)   = alnwf(nb,1:GFS_Control%blksz(nb))
              GFS_Data(nb)%Sfcprop%facsf(:)   = facsf(nb,1:GFS_Control%blksz(nb))
              GFS_Data(nb)%Sfcprop%facwf(:)   = facwf(nb,1:GFS_Control%blksz(nb))
-             GFS_Data(nb)%Radtend%semis(:)   = semis(nb,1:GFS_Control%blksz(nb))
+             !GFS_Data(nb)%Radtend%semis(:)   = semis(nb,1:GFS_Control%blksz(nb))
 
              if (GFS_Control%lsm == 1) then
              ! Noah LSM
@@ -308,7 +309,7 @@ module stochastic_physics_wrapper_mod
              deallocate(alnwf)
              deallocate(facsf)
              deallocate(facwf)
-             deallocate(semis)
+             !deallocate(semis)
 
          endif ! lndp block
          deallocate(xlat)
