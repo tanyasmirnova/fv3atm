@@ -16,7 +16,19 @@ module stochastic_physics_wrapper_mod
   real(kind=kind_phys), dimension(:,:,:), allocatable, save :: smc
   real(kind=kind_phys), dimension(:,:,:), allocatable, save :: stc
   real(kind=kind_phys), dimension(:,:,:), allocatable, save :: slc
+  !
   real(kind=kind_phys), dimension(:,:), allocatable, save :: vfrac
+  !albedo
+  real(kind=kind_phys), dimension(:,:), allocatable, save :: snoalb
+  real(kind=kind_phys), dimension(:,:), allocatable, save :: alvsf
+  real(kind=kind_phys), dimension(:,:), allocatable, save :: alnsf
+  real(kind=kind_phys), dimension(:,:), allocatable, save :: alvwf
+  real(kind=kind_phys), dimension(:,:), allocatable, save :: alnwf
+  real(kind=kind_phys), dimension(:,:), allocatable, save :: facsf
+  real(kind=kind_phys), dimension(:,:), allocatable, save :: facwf
+  !emissivity
+  !real(kind=kind_phys), dimension(:,:), allocatable, save :: semis
+
   real(kind=kind_phys), dimension(:,:), allocatable, save :: stype
 
   ! For cellular automata
@@ -58,7 +70,8 @@ module stochastic_physics_wrapper_mod
     use cellular_automata_global_mod, only: cellular_automata_global
     use cellular_automata_sgs_mod,    only: cellular_automata_sgs
     use lndp_apply_perts_mod, only: lndp_apply_perts
-    use namelist_soilveg, only: maxsmc
+    use namelist_soilveg_ruc, only: MAXSMC, MAXSMCnoah
+    use module_soil_pre
 
     implicit none
 
@@ -69,6 +82,7 @@ module stochastic_physics_wrapper_mod
 
     integer :: nthreads, nb
     logical :: param_update_flag
+    integer :: nsoil, nsoil_lsm
 
 #ifdef _OPENMP
     nthreads = omp_get_max_threads()
@@ -108,11 +122,25 @@ module stochastic_physics_wrapper_mod
          allocate(sfc_wts(1:Atm_block%nblks,maxval(GFS_Control%blksz),1:GFS_Control%n_var_lndp))
       end if
       if (GFS_Control%lndp_type .EQ. 2) then ! save wts, and apply lndp scheme
+        if (GFS_Control%lsm == 1) then
           allocate(smc(1:Atm_block%nblks,maxval(GFS_Control%blksz),GFS_Control%lsoil))
           allocate(slc(1:Atm_block%nblks,maxval(GFS_Control%blksz),GFS_Control%lsoil))
           allocate(stc(1:Atm_block%nblks,maxval(GFS_Control%blksz),GFS_Control%lsoil))
+        elseif (GFS_Control%lsm == GFS_Control%lsm_ruc) then
+          allocate(smc(1:Atm_block%nblks,maxval(GFS_Control%blksz),GFS_Control%lsoil_lsm))
+          allocate(slc(1:Atm_block%nblks,maxval(GFS_Control%blksz),GFS_Control%lsoil_lsm))
+          allocate(stc(1:Atm_block%nblks,maxval(GFS_Control%blksz),GFS_Control%lsoil_lsm))
+        endif
           allocate(stype(1:Atm_block%nblks,maxval(GFS_Control%blksz)))
           allocate(vfrac(1:Atm_block%nblks,maxval(GFS_Control%blksz)))
+          allocate(snoalb(1:Atm_block%nblks,maxval(GFS_Control%blksz)))
+          allocate(alvsf(1:Atm_block%nblks,maxval(GFS_Control%blksz)))
+          allocate(alnsf(1:Atm_block%nblks,maxval(GFS_Control%blksz)))
+          allocate(alvwf(1:Atm_block%nblks,maxval(GFS_Control%blksz)))
+          allocate(alnwf(1:Atm_block%nblks,maxval(GFS_Control%blksz)))
+          allocate(facsf(1:Atm_block%nblks,maxval(GFS_Control%blksz)))
+          allocate(facwf(1:Atm_block%nblks,maxval(GFS_Control%blksz)))
+          !allocate(semis(1:Atm_block%nblks,maxval(GFS_Control%blksz)))
       endif
 
       do nb=1,Atm_block%nblks
@@ -171,10 +199,24 @@ module stochastic_physics_wrapper_mod
 
              do nb=1,Atm_block%nblks
                 stype(nb,1:GFS_Control%blksz(nb))  = GFS_Data(nb)%Sfcprop%stype(:)
-                smc(nb,1:GFS_Control%blksz(nb),:)  = GFS_Data(nb)%Sfcprop%smc(:,:)
-                slc(nb,1:GFS_Control%blksz(nb),:)  = GFS_Data(nb)%Sfcprop%slc(:,:)
-                stc(nb,1:GFS_Control%blksz(nb),:)  = GFS_Data(nb)%Sfcprop%stc(:,:)
-                vfrac(nb,1:GFS_Control%blksz(nb))  = GFS_Data(nb)%Sfcprop%vfrac(:)
+                vfrac(nb,1:GFS_Control%blksz(nb))  = GFS_Data(nb)%Sfcprop%vfrac(:) 
+                snoalb(nb,1:GFS_Control%blksz(nb)) = GFS_Data(nb)%Sfcprop%snoalb(:)
+                alvsf(nb,1:GFS_Control%blksz(nb))  = GFS_Data(nb)%Sfcprop%alvsf(:)
+                alnsf(nb,1:GFS_Control%blksz(nb))  = GFS_Data(nb)%Sfcprop%alnsf(:)
+                alvwf(nb,1:GFS_Control%blksz(nb))  = GFS_Data(nb)%Sfcprop%alvwf(:)
+                alnwf(nb,1:GFS_Control%blksz(nb))  = GFS_Data(nb)%Sfcprop%alnwf(:)
+                facsf(nb,1:GFS_Control%blksz(nb))  = GFS_Data(nb)%Sfcprop%facsf(:)
+                facwf(nb,1:GFS_Control%blksz(nb))  = GFS_Data(nb)%Sfcprop%facwf(:)
+                !semis(nb,1:GFS_Control%blksz(nb))  = GFS_Data(nb)%Radtend%semis(:)
+               if (GFS_Control%lsm == 1) then
+                 smc(nb,1:GFS_Control%blksz(nb),:)  = GFS_Data(nb)%Sfcprop%smc(:,:) 
+                 slc(nb,1:GFS_Control%blksz(nb),:)  = GFS_Data(nb)%Sfcprop%slc(:,:) 
+                 stc(nb,1:GFS_Control%blksz(nb),:)  = GFS_Data(nb)%Sfcprop%stc(:,:) 
+               elseif (GFS_Control%lsm == GFS_Control%lsm_ruc) then
+                 smc(nb,1:GFS_Control%blksz(nb),:)  = GFS_Data(nb)%Sfcprop%smois(:,:)
+                 slc(nb,1:GFS_Control%blksz(nb),:)  = GFS_Data(nb)%Sfcprop%sh2o(:,:)
+                 stc(nb,1:GFS_Control%blksz(nb),:)  = GFS_Data(nb)%Sfcprop%tslb(:,:)
+               endif
              end do
 
              ! determine whether land paramaters have been over-written
@@ -182,20 +224,49 @@ module stochastic_physics_wrapper_mod
                     param_update_flag = .true.
              else
                     param_update_flag = .false.
-             endif
-             call lndp_apply_perts( GFS_Control%blksz, GFS_Control%lsm,  GFS_Control%lsoil, GFS_Control%dtf, &
-                             GFS_Control%n_var_lndp, GFS_Control%lndp_var_list, GFS_Control%lndp_prt_list, &
-                             sfc_wts, xlon, xlat, stype, maxsmc,param_update_flag, smc, slc,stc, vfrac, ierr)
-             if (ierr/=0)  then
+             endif 
+
+             nsoil      = GFS_Control%lsoil
+             nsoil_lsm  = GFS_Control%lsoil_lsm
+
+             call lndp_apply_perts( GFS_Control%blksz, GFS_Control%lsm,  nsoil, GFS_Control%lsm_ruc,          &
+                               nsoil_lsm, GFS_Control%zs, GFS_Control%dtf,                                    & 
+                               GFS_Control%n_var_lndp, GFS_Control%lndp_var_list, GFS_Control%lndp_prt_list,  & 
+                               sfc_wts, xlon, xlat, stype, MAXSMCnoah, MAXSMC,                                &
+                               param_update_flag, smc, slc, stc,                                              &
+                               vfrac, alvsf, alnsf, alvwf, alnwf, facsf, facwf, snoalb, ierr) 
+                               !vfrac, alvsf, alnsf, alvwf, alnwf, facsf, facwf, snoalb, semis, ierr) 
+             if (ierr/=0)  then 
                     write(6,*) 'call to GFS_apply_lndp failed'
                     return
              endif
-             do nb=1,Atm_block%nblks
-                 GFS_Data(nb)%Sfcprop%smc(:,:) =  smc(nb,1:GFS_Control%blksz(nb),:)
-                 GFS_Data(nb)%Sfcprop%slc(:,:) =  slc(nb,1:GFS_Control%blksz(nb),:)
-                 GFS_Data(nb)%Sfcprop%stc(:,:) =  stc(nb,1:GFS_Control%blksz(nb),:)
-                 GFS_Data(nb)%Sfcprop%vfrac(:) =  vfrac(nb,1:GFS_Control%blksz(nb))
-             enddo
+             GFS_Data(nb)%Sfcprop%vfrac(:)   = vfrac(nb,1:GFS_Control%blksz(nb))
+
+             GFS_Data(nb)%Sfcprop%snoalb(:)  = snoalb(nb,1:GFS_Control%blksz(nb))
+             GFS_Data(nb)%Sfcprop%alvsf(:)   = alvsf(nb,1:GFS_Control%blksz(nb))
+             GFS_Data(nb)%Sfcprop%alnsf(:)   = alnsf(nb,1:GFS_Control%blksz(nb))
+             GFS_Data(nb)%Sfcprop%alvwf(:)   = alvwf(nb,1:GFS_Control%blksz(nb))
+             GFS_Data(nb)%Sfcprop%alnwf(:)   = alnwf(nb,1:GFS_Control%blksz(nb))
+             GFS_Data(nb)%Sfcprop%facsf(:)   = facsf(nb,1:GFS_Control%blksz(nb))
+             GFS_Data(nb)%Sfcprop%facwf(:)   = facwf(nb,1:GFS_Control%blksz(nb))
+             !GFS_Data(nb)%Radtend%semis(:)   = semis(nb,1:GFS_Control%blksz(nb))
+
+             if (GFS_Control%lsm == 1) then
+             ! Noah LSM
+               do nb=1,Atm_block%nblks
+                   GFS_Data(nb)%Sfcprop%smc(:,:) =  smc(nb,1:GFS_Control%blksz(nb),:)
+                   GFS_Data(nb)%Sfcprop%slc(:,:) =  slc(nb,1:GFS_Control%blksz(nb),:)
+                   GFS_Data(nb)%Sfcprop%stc(:,:) =  stc(nb,1:GFS_Control%blksz(nb),:)
+               enddo
+             elseif (GFS_Control%lsm == GFS_Control%lsm_ruc) then
+             ! RUC LSM
+               do nb=1,Atm_block%nblks
+                   GFS_Data(nb)%Sfcprop%smois(:,:) = smc(nb,1:GFS_Control%blksz(nb),:)
+                   GFS_Data(nb)%Sfcprop%sh2o(:,:)  = slc(nb,1:GFS_Control%blksz(nb),:)
+                   GFS_Data(nb)%Sfcprop%tslb(:,:)  = stc(nb,1:GFS_Control%blksz(nb),:)
+               enddo
+             endif
+
          endif ! lndp block
       end if
 
@@ -321,6 +392,14 @@ module stochastic_physics_wrapper_mod
           if (allocated(stc)) deallocate(stc)
           if (allocated(stype)) deallocate(stype)
           if (allocated(vfrac)) deallocate(vfrac)
+          if (allocated(snoalb)) deallocate(snoalb)
+          if (allocated(alvsf)) deallocate(alvsf)
+          if (allocated(alnsf)) deallocate(alnsf)
+          if (allocated(alvwf)) deallocate(alvwf)
+          if (allocated(alnwf)) deallocate(alnwf)
+          if (allocated(facsf)) deallocate(facsf)
+          if (allocated(facwf)) deallocate(facwf)
+          !if (allocated(semis)) deallocate(semis)
       endif
       call finalize_stochastic_physics()
    endif
