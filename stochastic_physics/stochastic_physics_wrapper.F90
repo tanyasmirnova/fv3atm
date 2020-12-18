@@ -70,8 +70,6 @@ module stochastic_physics_wrapper_mod
     use cellular_automata_global_mod, only: cellular_automata_global
     use cellular_automata_sgs_mod,    only: cellular_automata_sgs
     use lndp_apply_perts_mod, only: lndp_apply_perts
-    use namelist_soilveg_ruc, only: MAXSMC, MAXSMCnoah
-    use module_soil_pre
 
     implicit none
 
@@ -82,7 +80,6 @@ module stochastic_physics_wrapper_mod
 
     integer :: nthreads, nb
     logical :: param_update_flag
-    integer :: nsoil, nsoil_lsm
 
 #ifdef _OPENMP
     nthreads = omp_get_max_threads()
@@ -226,14 +223,11 @@ module stochastic_physics_wrapper_mod
                     param_update_flag = .false.
              endif 
 
-             nsoil      = GFS_Control%lsoil
-             nsoil_lsm  = GFS_Control%lsoil_lsm
-
-             call lndp_apply_perts( GFS_Control%blksz, GFS_Control%lsm,  nsoil, GFS_Control%lsm_ruc,          &
-                               nsoil_lsm, GFS_Control%zs, GFS_Control%dtf,                                    & 
-                               GFS_Control%n_var_lndp, GFS_Control%lndp_var_list, GFS_Control%lndp_prt_list,  & 
-                               sfc_wts, xlon, xlat, stype, MAXSMCnoah, MAXSMC,                                &
-                               param_update_flag, smc, slc, stc,                                              &
+             call lndp_apply_perts( GFS_Control%blksz, GFS_Control%lsm, GFS_Control%lsoil, GFS_Control%lsm_ruc, &
+                               GFS_Control%lsoil_lsm, GFS_Control%zs, GFS_Control%dtf,                          & 
+                               GFS_Control%n_var_lndp, GFS_Control%lndp_var_list, GFS_Control%lndp_prt_list,    & 
+                               sfc_wts, xlon, xlat, stype, GFS_Control%pores, GFS_Control%resid,                &
+                               param_update_flag, smc, slc, stc,                                                &
                                vfrac, alvsf, alnsf, alvwf, alnwf, facsf, facwf, snoalb, ierr) 
                                !vfrac, alvsf, alnsf, alvwf, alnwf, facsf, facwf, snoalb, semis, ierr) 
              if (ierr/=0)  then 
