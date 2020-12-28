@@ -812,6 +812,8 @@ module GFS_typedefs
     integer              :: lsnow_lsm       !< maximum number of snow layers internal to land surface model
     integer              :: lsnow_lsm_lbound!< lower bound for snow arrays, depending on lsnow_lsm
     real(kind=kind_phys), pointer :: zs(:) => null() !< depth of soil levels for land surface model
+    real(kind=kind_phys), pointer :: pores(:) => null() !< max soil moisture for a given soil type for land surface model
+    real(kind=kind_phys), pointer :: resid(:) => null() !< min soil moisture for a given soil type for land surface model
     logical              :: rdlai           !< read LAI from input file (for RUC LSM or NOAH LSM WRFv4)
     logical              :: ua_phys         !< flag for using University of Arizona? extension to NOAH LSM WRFv4
     logical              :: usemonalb       !< flag to read surface diffused shortwave albedo from input file for NOAH LSM WRFv4
@@ -3981,6 +3983,12 @@ module GFS_typedefs
     end if
     ! Set number of ice model layers
     Model%kice      = kice
+   
+    ! Allocate variable for min/max soil moisture for a given soil type
+    allocate (Model%pores(30))
+    allocate (Model%resid(30))
+    Model%pores    = clear_val
+    Model%resid    = clear_val
     !
     if (lsnow_lsm /= 3) then
       write(0,*) 'Logic error: NoahMP expects the maximum number of snow layers to be exactly 3 (see sfc_noahmp_drv.f)'
