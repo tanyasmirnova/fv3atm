@@ -224,14 +224,15 @@ module stochastic_physics_wrapper_mod
              ! determine whether land paramaters have been over-written to
              ! trigger applying perturbations (logic copied from GFS_driver),
              ! or if perturbations should be applied at every time step
-             if (mod(GFS_Control%kdt,GFS_Control%nscyc) == 1 .or. GFS_Control%lndp_each_step) then
+             if (mod(GFS_Control%kdt,GFS_Control%nscyc) == 1 ) then
                param_update_flag = .true.
              else
                param_update_flag = .false.
              endif
 
              call lndp_apply_perts(GFS_Control%blksz, GFS_Control%lsm, GFS_Control%lsm_noah, GFS_Control%lsm_ruc, lsoil,      &
-                               GFS_Control%dtf, GFS_Control%n_var_lndp, GFS_Control%lndp_var_list, GFS_Control%lndp_prt_list, &
+                               GFS_Control%dtf, GFS_Control%kdt, GFS_Control%lndp_each_step,                                  &
+                               GFS_Control%n_var_lndp, GFS_Control%lndp_var_list, GFS_Control%lndp_prt_list,                  &
                                sfc_wts, xlon, xlat, stype, GFS_Control%pores, GFS_Control%resid,param_update_flag,            &
                                smc, slc, stc, vfrac, alvsf, alnsf, alvwf, alnwf, facsf, facwf, snoalb, semis, ierr)
              if (ierr/=0)  then
