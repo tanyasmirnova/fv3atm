@@ -6235,12 +6235,12 @@ module GFS_typedefs
       Diag%du3dt    = zero
       Diag%dv3dt    = zero
       Diag%dt3dt    = zero
-!      if (Model%qdiag3d) then
-!        Diag%dq3dt    = zero
+      if (Model%qdiag3d) then
+        Diag%dq3dt    = zero
 !        Diag%upd_mf   = zero
 !        Diag%dwn_mf   = zero
 !        Diag%det_mf   = zero
-!      endif
+      endif
     endif
 
 !
