@@ -257,13 +257,19 @@ module GFS_typedefs
 !--- In (radiation only)
     real (kind=kind_phys), pointer :: sncovr (:)   => null()  !< snow cover in fraction over land
     real (kind=kind_phys), pointer :: sncovr_ice (:)  => null()  !< snow cover in fraction over ice (RUC LSM only)
-    real (kind=kind_phys), pointer :: snoalb (:)   => null()  !< maximum snow albedo in fraction
+    real (kind=kind_phys), pointer :: snoalb (:)   => null()  !< maximum snow albedo in fraction for land
     real (kind=kind_phys), pointer :: alvsf  (:)   => null()  !< mean vis albedo with strong cosz dependency
     real (kind=kind_phys), pointer :: alnsf  (:)   => null()  !< mean nir albedo with strong cosz dependency
     real (kind=kind_phys), pointer :: alvwf  (:)   => null()  !< mean vis albedo with weak cosz dependency
     real (kind=kind_phys), pointer :: alnwf  (:)   => null()  !< mean nir albedo with weak cosz dependency
     real (kind=kind_phys), pointer :: facsf  (:)   => null()  !< fractional coverage with strong cosz dependency
     real (kind=kind_phys), pointer :: facwf  (:)   => null()  !< fractional coverage with   weak cosz dependency
+    real (kind=kind_phys), pointer :: sfalb_lnd (:) => null() !< surface albedo over land for LSM
+    real (kind=kind_phys), pointer :: sfalb_ice (:) => null() !< surface albedo over ice for LSM
+    real (kind=kind_phys), pointer :: emis_lnd (:)  => null() !< surface emissivity over land for LSM
+    real (kind=kind_phys), pointer :: emis_ice (:)  => null() !< surface emissivity over ice for LSM
+    real (kind=kind_phys), pointer :: alb_ice  (:)  => null() !< snow-free albedo over ice
+    real (kind=kind_phys), pointer :: alb_snow_ice  (:) => null() !< snow albedo for snow on ice
 
 !--- In (physics only)
     real (kind=kind_phys), pointer :: slope  (:)   => null()  !< sfc slope type for lsm
@@ -2333,6 +2339,12 @@ module GFS_typedefs
     allocate (Sfcprop%fice     (IM))
 !   allocate (Sfcprop%hprim    (IM))
     allocate (Sfcprop%hprime   (IM,Model%nmtvr))
+    allocate (Sfcprop%emis_lnd (IM))
+    allocate (Sfcprop%emis_ice (IM))
+    allocate (Sfcprop%sfalb_lnd (IM))
+    allocate (Sfcprop%sfalb_ice (IM))
+    allocate (Sfcprop%alb_ice  (IM))
+    allocate (Sfcprop%alb_snow_ice  (IM))
 
     Sfcprop%slmsk     = clear_val
     Sfcprop%oceanfrac = clear_val
@@ -2353,6 +2365,12 @@ module GFS_typedefs
     Sfcprop%fice      = clear_val
 !   Sfcprop%hprim     = clear_val
     Sfcprop%hprime    = clear_val
+    Sfcprop%emis_lnd  = clear_val
+    Sfcprop%emis_ice  = clear_val
+    Sfcprop%sfalb_lnd = clear_val
+    Sfcprop%sfalb_ice = clear_val
+    Sfcprop%alb_ice   = clear_val
+    Sfcprop%alb_snow_ice = clear_val
 
 !--- In (radiation only)
     allocate (Sfcprop%snoalb (IM))
@@ -2609,7 +2627,7 @@ module GFS_typedefs
       allocate(Sfcprop%z0base(IM))
       Sfcprop%z0base = clear_val
     end if
-    if (Model%lsm == Model%lsm_noah_wrfv4) then
+    if (Model%lsm == Model%lsm_noah_wrfv4 .or. Model%lsm == Model%lsm_ruc) then
       allocate(Sfcprop%semisbase(IM))
       Sfcprop%semisbase = clear_val
     end if
