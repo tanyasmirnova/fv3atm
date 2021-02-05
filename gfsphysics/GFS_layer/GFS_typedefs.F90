@@ -270,6 +270,7 @@ module GFS_typedefs
     real (kind=kind_phys), pointer :: emis_ice (:)  => null() !< surface emissivity over ice for LSM
     real (kind=kind_phys), pointer :: alb_ice  (:)  => null() !< snow-free albedo over ice
     real (kind=kind_phys), pointer :: alb_snow_ice  (:) => null() !< snow albedo for snow on ice
+    real (kind=kind_phys), pointer :: sfalb_lnd_bck (:) => null() !< snow-free albedo over land
 
 !--- In (physics only)
     real (kind=kind_phys), pointer :: slope  (:)   => null()  !< sfc slope type for lsm
@@ -2345,6 +2346,7 @@ module GFS_typedefs
     allocate (Sfcprop%sfalb_ice (IM))
     allocate (Sfcprop%alb_ice  (IM))
     allocate (Sfcprop%alb_snow_ice  (IM))
+    allocate (Sfcprop%sfalb_lnd_bck (IM))
 
     Sfcprop%slmsk     = clear_val
     Sfcprop%oceanfrac = clear_val
@@ -2371,6 +2373,7 @@ module GFS_typedefs
     Sfcprop%sfalb_ice = clear_val
     Sfcprop%alb_ice   = clear_val
     Sfcprop%alb_snow_ice = clear_val
+    Sfcprop%sfalb_lnd_bck= clear_val
 
 !--- In (radiation only)
     allocate (Sfcprop%snoalb (IM))
@@ -2627,10 +2630,10 @@ module GFS_typedefs
       allocate(Sfcprop%z0base(IM))
       Sfcprop%z0base = clear_val
     end if
-    if (Model%lsm == Model%lsm_noah_wrfv4 .or. Model%lsm == Model%lsm_ruc) then
+    !if (Model%lsm == Model%lsm_noah_wrfv4 .or. Model%lsm == Model%lsm_ruc) then
       allocate(Sfcprop%semisbase(IM))
       Sfcprop%semisbase = clear_val
-    end if
+    !end if
     
     if (Model%lsm == Model%lsm_ruc) then
        ! For land surface models with different numbers of levels than the four NOAH levels
